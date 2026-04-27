@@ -759,7 +759,7 @@ const MAX = 1000, COST = 20, WRONG = 100, HINT_NUDGE = 75, HINT_EXAMPLES = 50, F
 const S = {
   round: 1, total: 0,
   score: MAX, theme: '', hint: '', nudge: '', examples: [], starters: [],
-  yes: [], no: [], exampleItems: [], guesses: 0, wrongs: 0, active: false,
+  yes: [], no: [], exampleItems: [], guesses: 0, wrongs: 0, hintsUsed: 0, active: false,
   examplesUnlocked: false, nudgeUnlocked: false, nudgeUsed: false, examplesUsed: false
 };
 
@@ -795,7 +795,7 @@ function setGuessEnabled(on) {
 async function startRound() {
   S.score = MAX; S.theme = ''; S.hint = ''; S.nudge = ''; S.examples = [];
   S.starters = []; S.yes = []; S.no = []; S.exampleItems = [];
-  S.guesses = 0; S.wrongs = 0; S.active = false;
+  S.guesses = 0; S.wrongs = 0; S.hintsUsed = 0; S.active = false;
   S.examplesUnlocked = false; S.nudgeUnlocked = false;
   S.nudgeUsed = false; S.examplesUsed = false;
 
@@ -904,7 +904,7 @@ async function doGuess() {
 // HINTS
 // ═══════════════════════════════════════════
 function checkHintUnlock() {
-  const total = S.guesses + S.wrongs;
+  const total = S.guesses + S.wrongs + S.hintsUsed;
   const lockedEl = $id('hints-locked');
   if (!S.examplesUnlocked && total >= 7) {
     S.examplesUnlocked = true;
@@ -921,6 +921,7 @@ function checkHintUnlock() {
 function useNudge() {
   if (S.nudgeUsed) return;
   S.nudgeUsed = true;
+  S.hintsUsed++;
   deduct(HINT_NUDGE);
   $id('nudge-btn').disabled = true;
   $id('nudge-text').textContent = S.nudge;
@@ -930,6 +931,8 @@ function useNudge() {
 function useExamples() {
   if (S.examplesUsed) return;
   S.examplesUsed = true;
+  S.hintsUsed++;
+  checkHintUnlock();
   deduct(HINT_EXAMPLES);
   $id('examples-btn').disabled = true;
   const known = [...S.yes, ...S.exampleItems].map(x => x.toLowerCase());
