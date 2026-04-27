@@ -808,7 +808,14 @@ async function startRound() {
   $id('loading-msg').textContent = 'Thinking up a theme…';
 
   try {
-    const puzzle = await generatePuzzle(S.lastThemeType);
+    let puzzle;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      $id('loading-msg').textContent = attempt === 1 ? 'Thinking up a theme…' : `Checking the puzzle… (attempt ${attempt})`;
+      puzzle = await generatePuzzle(S.lastThemeType);
+      const valid = await verifyPuzzle(puzzle);
+      if (valid) break;
+      if (attempt === 3) throw new Error('Could not generate a valid puzzle — please try again.');
+    }
     S.theme = puzzle.theme; S.hint = puzzle.hint;
     S.nudge = puzzle.nudge || ''; S.examples = puzzle.examples || [];
     S.starters = puzzle.starters; S.yes = [...puzzle.starters];
@@ -1085,6 +1092,27 @@ The examples array must contain EXACTLY 5 items — no more, no fewer. Each exam
   if (!puzzle.theme || !puzzle.starters || puzzle.starters.length < 3)
     throw new Error('Invalid puzzle format from server');
   return puzzle;
+}
+
+async function verifyPuzzle(puzzle) {
+  const system = `You are a strict fact-checker for a word puzzle game. Your job is to verify that ALL 4 starter items genuinely and unambiguously fit the stated theme.
+
+Theme: "${puzzle.theme}"
+Description: ${puzzle.hint}
+
+Check each starter one by one:
+${puzzle.starters.map((s, i) => `${i + 1}. "${s}"`).join('\n')}
+
+For linguistic themes (hidden words, silent letters, etc.) — verify character by character.
+For compound word themes — verify the compound is a real common English word.
+For category themes — verify the item genuinely and clearly belongs.
+
+If ALL 4 starters are correct, reply with exactly: PASS
+If ANY starter is wrong or doubtful, reply with exactly: FAIL
+Nothing else — just PASS or FAIL.`;
+
+  const result = await callClaude(system, 'Verify these starters.', 10);
+  return result.trim().toUpperCase().startsWith('PASS');
 }
 
 async function judgeItem(item) {
