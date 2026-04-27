@@ -1034,19 +1034,25 @@ async function callClaude(system, userMsg, maxTokens = 10) {
 async function generatePuzzle() {
   const system = `You create clever, mid-to-hard difficulty themes for a guessing game similar to NYT Connections.
 
-GOOD theme types:
-- Compound words: items that all precede or follow a hidden word (e.g. all go before "house": green, tree, jail, pent)
-- Eponyms: things named after real people (jacuzzi, cardigan, wellington, sandwich)
-- Hidden linguistic property: words with a silent letter, words that are also verbs
-- Unexpected category: things that are alive (dog, coral, Ryan Gosling, daffodil), things heavier than 100kg
-- Things you can [verb]: things you can catch (cold, bus, fish, criminal)
-- Colour association: things strongly associated with one colour without being obviously the same
+GOOD theme types (use these as inspiration):
+- Things that shrink or get smaller as you use them: candle, soap, pencil, ice cube, eraser, chalk
+- Things that are alive but people forget are alive: coral, virus, yeast, lichen, sponge
+- Things you can catch: cold, bus, fish, criminal, flight, wave
+- Compound words — items that all precede or follow a hidden word: e.g. all follow "break": ground, wind, heart, record, news, tie, silence, fast
+- Things named after real people (eponyms): jacuzzi, cardigan, wellington, sandwich, bowie knife
+- Words with a hidden linguistic property: silent letter, palindrome, also a verb, also a unit of measurement
+- Things that fit in one hand: marble, coin, lighter, walnut, dice
+- Size comparison surprises: things bigger than a double-decker bus, things smaller than a credit card
+- Unexpected alive/not alive: things that are technically alive that surprise people
+- Things associated with a specific colour without being that colour: flamingo, lobster, blush, salmon (all pink)
 
 Rules:
 - 4 starter items must CLEARLY fit the theme
 - The connection should NOT be immediately obvious from the 4 starters alone
-- Medium to hard difficulty — avoid trivial themes like "animals" or "red things"
+- Medium to hard difficulty — avoid trivial themes like "animals", "fruits", or "things that are red"
+- Avoid themes based on nationalities, country names, or obscure cultural references
 - The theme should produce a satisfying "aha!" moment
+- Prefer themes where players can probe freely with common everyday words
 
 Return ONLY valid JSON, no extra text:
 {
