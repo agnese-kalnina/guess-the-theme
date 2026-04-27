@@ -760,7 +760,8 @@ const S = {
   round: 1, total: 0,
   score: MAX, theme: '', hint: '', nudge: '', examples: [], starters: [],
   yes: [], no: [], exampleItems: [], guesses: 0, wrongs: 0, hintsUsed: 0, active: false,
-  examplesUnlocked: false, nudgeUnlocked: false, nudgeUsed: false, examplesUsed: false
+  examplesUnlocked: false, nudgeUnlocked: false, nudgeUsed: false, examplesUsed: false,
+  lastThemeType: ''
 };
 
 // ═══════════════════════════════════════════
@@ -806,10 +807,11 @@ async function startRound() {
   $id('loading-msg').textContent = 'Thinking up a theme…';
 
   try {
-    const puzzle = await generatePuzzle();
+    const puzzle = await generatePuzzle(S.lastThemeType);
     S.theme = puzzle.theme; S.hint = puzzle.hint;
     S.nudge = puzzle.nudge || ''; S.examples = puzzle.examples || [];
     S.starters = puzzle.starters; S.yes = [...puzzle.starters];
+    S.lastThemeType = puzzle.type || '';
     $id('nudge-btn').disabled = true;
     $id('examples-btn').disabled = true;
     $id('hints-locked').textContent = 'Examples unlock after guess 7, Nudge after guess 12';
@@ -1031,8 +1033,11 @@ async function callClaude(system, userMsg, maxTokens = 10) {
   return data.content[0].text.trim();
 }
 
-async function generatePuzzle() {
-  const system = `You create clever, mid-to-hard difficulty themes for a guessing game similar to NYT Connections.
+async function generatePuzzle(lastThemeType = '') {
+  const avoidLine = lastThemeType
+    ? `\nIMPORTANT: The previous puzzle was type "${lastThemeType}". This round MUST use a different type.`
+    : '';
+  const system = `You create clever, mid-to-hard difficulty themes for a guessing game similar to NYT Connections.${avoidLine}
 
 GOOD theme types (use these as inspiration — don't repeat the exact examples, use them to understand the style):
 - Things that shrink or get smaller as you use them: candle, soap, pencil, ice cube, eraser, chalk
@@ -1055,6 +1060,7 @@ Rules:
 
 Return ONLY valid JSON, no extra text:
 {
+  "type": "one of: compound_words | eponyms | linguistic_property | size_comparison | things_alive | things_you_can_verb | colour_association | shrinking_things | unexpected_category",
   "theme": "concise theme label, 3-8 words",
   "starters": ["item1", "item2", "item3", "item4"],
   "hint": "description of the core concept for judging player answers",
@@ -1064,7 +1070,7 @@ Return ONLY valid JSON, no extra text:
 
 The examples array must contain EXACTLY 5 items — no more, no fewer. Each example must unambiguously fit the theme. Do not include borderline, debatable, or regional items.`;
 
-  const raw = await callClaude(system, 'Generate a new puzzle.', 300);
+  const raw = await callClaude(system, 'Generate a new puzzle.', 350);
   const cleaned = raw.replace(/```json?\s*/g, '').replace(/```/g, '').trim();
   let puzzle;
   try { puzzle = JSON.parse(cleaned); }
