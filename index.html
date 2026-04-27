@@ -1031,9 +1031,14 @@ async function judgeTheme(playerGuess) {
   const system = `You are judging whether a player correctly identified the theme in a word game.
 The actual theme: "${S.theme}"
 What to accept: ${S.hint}
-- Accept if the player captures the core concept, even with different wording
-- Accept reasonable synonyms or partial phrasings showing they understood
-- Reject if vague, wrong, or only partially correct
+
+Be GENEROUS. Accept the answer if:
+- The player identifies the key connecting word, pattern or concept — even as a single word (e.g. "cold" is correct if the theme is "cold ___")
+- The player uses different wording but clearly understands the connection
+- The player's answer is partially phrased but unmistakably correct
+
+Only reject if the answer is clearly wrong or shows no understanding of the actual connection.
+
 Answer with ONLY the word CORRECT or WRONG (uppercase, nothing else).`;
 
   const answer = await callClaude(system, `Player guessed: "${playerGuess}"`, 10);
