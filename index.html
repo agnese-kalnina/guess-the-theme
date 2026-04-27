@@ -734,7 +734,6 @@
     </div>
     <div class="stats-row">
       <div><div class="stat-n" id="st-g">0</div><div class="stat-l">Item guesses</div></div>
-      <div><div class="stat-n" id="st-w">0</div><div class="stat-l">Wrong declarations</div></div>
       <div><div class="stat-n" id="st-s">0</div><div class="stat-l">Points earned</div></div>
     </div>
     <div class="total-box">
@@ -988,11 +987,10 @@ function showResult(won = true) {
   $id('res-emoji').textContent = won ? '🎉' : '😔';
   $id('res-title').textContent = won ? 'Theme solved!' : 'Out of points';
   $id('res-sub').textContent = won
-    ? `Round ${S.round} complete — ${S.guesses} item guess${S.guesses !== 1 ? 'es' : ''}, ${S.wrongs} wrong declaration${S.wrongs !== 1 ? 's' : ''}.`
-    : `The theme got away this round. You used ${S.guesses} guess${S.guesses !== 1 ? 'es' : ''} and made ${S.wrongs} wrong declaration${S.wrongs !== 1 ? 's' : ''}.`;
+    ? `Round ${S.round} complete — you got it in ${S.guesses} guess${S.guesses !== 1 ? 'es' : ''}.`
+    : `The theme got away this round after ${S.guesses} guess${S.guesses !== 1 ? 'es' : ''}.`;
   $id('reveal-theme').textContent = S.theme;
   $id('st-g').textContent = S.guesses;
-  $id('st-w').textContent = S.wrongs;
   $id('st-s').textContent = S.score;
   $id('st-t').textContent = S.total;
 }
