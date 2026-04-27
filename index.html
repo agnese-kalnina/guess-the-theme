@@ -809,12 +809,17 @@ async function startRound() {
 
   try {
     let puzzle;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      $id('loading-msg').textContent = attempt === 1 ? 'Thinking up a theme…' : `Checking the puzzle… (attempt ${attempt})`;
-      puzzle = await generatePuzzle(S.lastThemeType);
-      const valid = await verifyPuzzle(puzzle);
-      if (valid) break;
-      if (attempt === 3) throw new Error('Could not generate a valid puzzle — please try again.');
+    let verified = false;
+    for (let attempt = 1; attempt <= 6; attempt++) {
+      if (attempt === 1) $id('loading-msg').textContent = 'Thinking up a theme…';
+      else if (attempt <= 3) $id('loading-msg').textContent = 'Double-checking the puzzle…';
+      else $id('loading-msg').textContent = 'Trying a fresh theme…';
+      // After 3 failed attempts, drop the type constraint and let AI pick freely
+      const typeHint = attempt <= 3 ? S.lastThemeType : '';
+      puzzle = await generatePuzzle(typeHint);
+      verified = await verifyPuzzle(puzzle);
+      if (verified) break;
+      if (attempt === 6) throw new Error('Could not generate a valid puzzle — please try again.');
     }
     S.theme = puzzle.theme; S.hint = puzzle.hint;
     S.nudge = puzzle.nudge || ''; S.examples = puzzle.examples || [];
