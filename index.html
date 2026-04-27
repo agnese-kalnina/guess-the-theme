@@ -1039,16 +1039,31 @@ YES = the item clearly fits the theme. NO = it does not. Be consistent and fair.
 }
 
 async function judgeTheme(playerGuess) {
+  const guessLower = playerGuess.toLowerCase().trim();
+  const themeLower = S.theme.toLowerCase();
+  const hintLower  = S.hint.toLowerCase();
+
+  // Fast accept: player's answer (or any word in it, 4+ chars)
+  // appears as a key word in the theme or hint description
+  if (guessLower.length >= 4) {
+    if (themeLower.includes(guessLower) || hintLower.includes(guessLower)) return true;
+  }
+  // Also check each word of the guess against theme/hint
+  const words = guessLower.split(/\s+/).filter(w => w.length >= 4);
+  for (const w of words) {
+    if (themeLower.includes(w) || hintLower.includes(w)) return true;
+  }
+
   const system = `You are judging whether a player correctly identified the theme in a word game.
 The actual theme: "${S.theme}"
 What to accept: ${S.hint}
 
-Be GENEROUS. Accept the answer if:
-- The player identifies the key connecting word, pattern or concept — even as a single word (e.g. "cold" is correct if the theme is "cold ___")
+Be GENEROUS. Accept if:
+- The player identifies the key connecting word or pattern, even as a single word
 - The player uses different wording but clearly understands the connection
-- The player's answer is partially phrased but unmistakably correct
+- The answer is partially phrased but unmistakably correct
 
-Only reject if the answer is clearly wrong or shows no understanding of the actual connection.
+Only reject if the answer is clearly wrong or shows no understanding at all.
 
 Answer with ONLY the word CORRECT or WRONG (uppercase, nothing else).`;
 
