@@ -625,6 +625,7 @@
       Four items share a hidden connection. Guess more items to narrow it down —
       each will either fit the theme or it won't. When you've figured it out,
       declare the theme. The fewer guesses it takes, the higher you score.
+      After 7 guesses you unlock example items; after 12, a cryptic nudge about the theme.
     </p>
     <div class="points-row">
       <span class="pill pill-dark">Start: 1,000 pts</span>
@@ -759,7 +760,7 @@ const S = {
   round: 1, total: 0,
   score: MAX, theme: '', hint: '', nudge: '', examples: [], starters: [],
   yes: [], no: [], exampleItems: [], guesses: 0, wrongs: 0, active: false,
-  hintsShown: false, nudgeUsed: false, examplesUsed: false
+  examplesUnlocked: false, nudgeUnlocked: false, nudgeUsed: false, examplesUsed: false
 };
 
 // ═══════════════════════════════════════════
@@ -795,7 +796,8 @@ async function startRound() {
   S.score = MAX; S.theme = ''; S.hint = ''; S.nudge = ''; S.examples = [];
   S.starters = []; S.yes = []; S.no = []; S.exampleItems = [];
   S.guesses = 0; S.wrongs = 0; S.active = false;
-  S.hintsShown = false; S.nudgeUsed = false; S.examplesUsed = false;
+  S.examplesUnlocked = false; S.nudgeUnlocked = false;
+  S.nudgeUsed = false; S.examplesUsed = false;
 
   hideEl('screen-landing');
   hideEl('screen-game');
@@ -810,6 +812,7 @@ async function startRound() {
     S.starters = puzzle.starters; S.yes = [...puzzle.starters];
     $id('nudge-btn').disabled = true;
     $id('examples-btn').disabled = true;
+    $id('hints-locked').textContent = 'Examples unlock at 7 · Nudge at 12';
     $id('hints-locked').style.display = '';
     $id('nudge-text').style.display = 'none';
     S.active = true;
@@ -901,11 +904,17 @@ async function doGuess() {
 // HINTS
 // ═══════════════════════════════════════════
 function checkHintUnlock() {
-  if (!S.hintsShown && S.guesses >= 10) {
-    S.hintsShown = true;
-    $id('nudge-btn').disabled = false;
+  const total = S.guesses + S.wrongs;
+  const lockedEl = $id('hints-locked');
+  if (!S.examplesUnlocked && total >= 7) {
+    S.examplesUnlocked = true;
     $id('examples-btn').disabled = false;
-    $id('hints-locked').style.display = 'none';
+    lockedEl.textContent = 'Nudge unlocks at 12';
+  }
+  if (!S.nudgeUnlocked && total >= 12) {
+    S.nudgeUnlocked = true;
+    $id('nudge-btn').disabled = false;
+    lockedEl.style.display = 'none';
   }
 }
 
@@ -957,7 +966,7 @@ async function doDeclare() {
     if (correct) {
       S.active = false; closeOverlay(); showResult(true);
     } else {
-      S.wrongs++; deduct(WRONG);
+      S.wrongs++; deduct(WRONG); checkHintUnlock();
       if (S.score <= FLOOR && S.active) {
         S.active = false;
         closeOverlay();
