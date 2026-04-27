@@ -584,6 +584,14 @@
     }
     .hint-i:hover::after { opacity: 1; }
 
+    .hints-locked {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.75rem;
+      color: var(--dim);
+      align-self: center;
+      font-style: italic;
+    }
+
     .nudge-reveal {
       font-family: 'Segoe UI', system-ui, sans-serif;
       font-size: 0.88rem;
@@ -660,16 +668,17 @@
       <div class="chips" id="no-chips"></div>
     </div>
 
-    <div id="hints-section" style="display:none">
+    <div id="hints-section">
       <div class="hints-row">
-        <button class="hint-btn" id="nudge-btn" onclick="useNudge()">
+        <button class="hint-btn" id="nudge-btn" onclick="useNudge()" disabled>
           💡 Nudge <span class="hint-cost">−50 pts</span>
           <span class="hint-i" data-tip="A cryptic clue about the theme">i</span>
         </button>
-        <button class="hint-btn" id="examples-btn" onclick="useExamples()">
+        <button class="hint-btn" id="examples-btn" onclick="useExamples()" disabled>
           📋 Examples <span class="hint-cost">−75 pts</span>
           <span class="hint-i" data-tip="5 more items that fit the theme">i</span>
         </button>
+        <span class="hints-locked" id="hints-locked">Unlocks after 10 guesses</span>
       </div>
       <div id="nudge-text" class="nudge-reveal" style="display:none"></div>
     </div>
@@ -795,9 +804,9 @@ async function startRound() {
     S.theme = puzzle.theme; S.hint = puzzle.hint;
     S.nudge = puzzle.nudge || ''; S.examples = puzzle.examples || [];
     S.starters = puzzle.starters; S.yes = [...puzzle.starters];
-    hideEl('hints-section');
-    $id('nudge-btn').disabled = false;
-    $id('examples-btn').disabled = false;
+    $id('nudge-btn').disabled = true;
+    $id('examples-btn').disabled = true;
+    $id('hints-locked').style.display = '';
     $id('nudge-text').style.display = 'none';
     S.active = true;
 
@@ -875,7 +884,9 @@ async function doGuess() {
 function checkHintUnlock() {
   if (!S.hintsShown && S.guesses >= 10) {
     S.hintsShown = true;
-    showEl('hints-section', 'block');
+    $id('nudge-btn').disabled = false;
+    $id('examples-btn').disabled = false;
+    $id('hints-locked').style.display = 'none';
   }
 }
 
