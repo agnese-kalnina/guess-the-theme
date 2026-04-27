@@ -198,16 +198,16 @@
 
     .btn-declare {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      padding: 0.6rem 1.2rem;
+      padding: 0.75rem 1.5rem;
       background: var(--text);
       color: var(--bg);
       border: none;
-      border-radius: 8px;
-      font-size: 0.88rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
       transition: background 0.15s;
-      white-space: nowrap;
+      width: 100%;
     }
     .btn-declare:hover { background: #1A0A00; }
 
@@ -660,7 +660,6 @@
         <span>Nudge: <b>&minus;75 pts</b> · Examples: <b>&minus;50 pts</b></span>
       </div>
     </div>
-    <button class="btn-declare" onclick="openOverlay()">I know the theme →</button>
   </div>
 
   <div class="g-body">
@@ -701,6 +700,8 @@
       </div>
       <div class="feedback" id="fb"></div>
     </div>
+
+    <button class="btn-declare" onclick="openOverlay()">I know the theme →</button>
   </div>
 </div>
 
