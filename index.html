@@ -262,6 +262,11 @@
       border: 1.5px solid var(--yes-bdr);
       color: var(--yes);
     }
+    .chip.example {
+      background: rgba(232,180,80,.13);
+      border: 1.5px dashed #C4A052;
+      color: #7A5020;
+    }
     .chip.no {
       background: rgba(176,128,80,.07);
       border: 1.5px dashed var(--no-bdr);
@@ -754,7 +759,7 @@ const MAX = 1000, COST = 20, WRONG = 100, HINT = 50, FLOOR = 10;
 const S = {
   round: 1, total: 0,
   score: MAX, theme: '', hint: '', nudge: '', examples: [], starters: [],
-  yes: [], no: [], guesses: 0, wrongs: 0, active: false,
+  yes: [], no: [], exampleItems: [], guesses: 0, wrongs: 0, active: false,
   hintsShown: false, nudgeUsed: false, examplesUsed: false
 };
 
@@ -789,7 +794,7 @@ function setGuessEnabled(on) {
 // ═══════════════════════════════════════════
 async function startRound() {
   S.score = MAX; S.theme = ''; S.hint = ''; S.nudge = ''; S.examples = [];
-  S.starters = []; S.yes = []; S.no = [];
+  S.starters = []; S.yes = []; S.no = []; S.exampleItems = [];
   S.guesses = 0; S.wrongs = 0; S.active = false;
   S.hintsShown = false; S.nudgeUsed = false; S.examplesUsed = false;
 
@@ -832,8 +837,9 @@ function backToLanding() { S.round = 1; S.total = 0; hideEl('screen-result'); sh
 function renderChips() {
   const stLen = S.starters.length;
   $id('yes-chips').innerHTML =
-    S.yes.map((item, i) => `<span class="chip ${i < stLen ? 'starter' : 'yes'}">${item}</span>`).join('');
-  $id('yes-cnt').textContent = S.yes.length;
+    S.yes.map((item, i) => `<span class="chip ${i < stLen ? 'starter' : 'yes'}">${item}</span>`).join('') +
+    S.exampleItems.map(item => `<span class="chip example">${item}</span>`).join('');
+  $id('yes-cnt').textContent = S.yes.length + S.exampleItems.length;
   $id('no-chips').innerHTML =
     S.no.map(item => `<span class="chip no">${item}</span>`).join('');
   $id('no-cnt').textContent = S.no.length;
@@ -850,6 +856,12 @@ async function doGuess() {
   const inp  = $id('guess-inp');
   const item = inp.value.trim();
   if (!item) return;
+
+  // Merge pending example chips into yes on the next real guess
+  if (S.exampleItems.length > 0) {
+    S.yes.push(...S.exampleItems);
+    S.exampleItems = [];
+  }
 
   const known = [...S.yes, ...S.no].map(x => x.toLowerCase());
   if (known.includes(item.toLowerCase())) {
@@ -868,6 +880,14 @@ async function doGuess() {
     fits ? S.yes.push(item) : S.no.push(item);
     renderChips();
     checkHintUnlock();
+
+    if (S.score <= FLOOR && S.active) {
+      S.active = false;
+      setFb(`✗ "${item}" doesn't fit. Out of points!`, 'no');
+      setTimeout(gameOver, 900);
+      return;
+    }
+
     setFb(
       fits ? `✓ "${item}" fits the theme. (−${COST} pts)` : `✗ "${item}" doesn't fit. (−${COST} pts)`,
       fits ? 'yes' : 'no'
@@ -904,9 +924,9 @@ function useExamples() {
   S.examplesUsed = true;
   deduct(75);
   $id('examples-btn').disabled = true;
-  const known = S.yes.map(x => x.toLowerCase());
+  const known = [...S.yes, ...S.exampleItems].map(x => x.toLowerCase());
   S.examples.forEach(item => {
-    if (!known.includes(item.toLowerCase())) S.yes.push(item);
+    if (!known.includes(item.toLowerCase())) S.exampleItems.push(item);
   });
   renderChips();
 }
@@ -934,12 +954,18 @@ async function doDeclare() {
   try {
     const correct = await judgeTheme(guess);
     if (correct) {
-      S.active = false; closeOverlay(); showResult();
+      S.active = false; closeOverlay(); showResult(true);
     } else {
       S.wrongs++; deduct(WRONG);
-      fb.textContent = `Not quite. −${WRONG} pts. Keep probing — you'll get there.`;
-      fb.className = 'ov-fb wrong';
-      $id('ov-inp').value = ''; $id('ov-submit').disabled = false; $id('ov-inp').focus();
+      if (S.score <= FLOOR && S.active) {
+        S.active = false;
+        closeOverlay();
+        setTimeout(gameOver, 400);
+      } else {
+        fb.textContent = `Not quite. −${WRONG} pts. Keep probing — you'll get there.`;
+        fb.className = 'ov-fb wrong';
+        $id('ov-inp').value = ''; $id('ov-submit').disabled = false; $id('ov-inp').focus();
+      }
     }
   } catch (err) {
     fb.textContent = `Error: ${err.message}`; fb.className = 'ov-fb wrong';
@@ -950,12 +976,18 @@ async function doDeclare() {
 // ═══════════════════════════════════════════
 // RESULT
 // ═══════════════════════════════════════════
-function showResult() {
+function gameOver() {
+  showResult(false);
+}
+
+function showResult(won = true) {
   S.total += S.score;
   hideEl('screen-game'); showEl('screen-result');
-  $id('res-sub').textContent =
-    `Round ${S.round} complete — ${S.guesses} item guess${S.guesses !== 1 ? 'es' : ''}, ` +
-    `${S.wrongs} wrong declaration${S.wrongs !== 1 ? 's' : ''}.`;
+  $id('res-emoji').textContent = won ? '🎉' : '😔';
+  $id('res-title').textContent = won ? 'Theme solved!' : 'Out of points';
+  $id('res-sub').textContent = won
+    ? `Round ${S.round} complete — ${S.guesses} item guess${S.guesses !== 1 ? 'es' : ''}, ${S.wrongs} wrong declaration${S.wrongs !== 1 ? 's' : ''}.`
+    : `The theme got away this round. You used ${S.guesses} guess${S.guesses !== 1 ? 'es' : ''} and made ${S.wrongs} wrong declaration${S.wrongs !== 1 ? 's' : ''}.`;
   $id('reveal-theme').textContent = S.theme;
   $id('st-g').textContent = S.guesses;
   $id('st-w').textContent = S.wrongs;
@@ -1009,7 +1041,7 @@ Return ONLY valid JSON, no extra text:
   "theme": "concise theme label, 3-8 words",
   "starters": ["item1", "item2", "item3", "item4"],
   "hint": "description of the core concept for judging player answers",
-  "nudge": "one cryptic sentence hinting at the theme without naming it",
+  "nudge": "one cryptic sentence hinting at what connects all the items — point to the pattern or hidden word they share, not descriptions of individual items",
   "examples": ["item5", "item6", "item7", "item8", "item9"]
 }`;
 
