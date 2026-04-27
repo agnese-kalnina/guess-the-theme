@@ -1053,7 +1053,7 @@ Return ONLY valid JSON, no extra text:
   "theme": "concise theme label, 3-8 words",
   "starters": ["item1", "item2", "item3", "item4"],
   "hint": "description of the core concept for judging player answers",
-  "nudge": "one sentence that nudges the player toward the connection without naming it — describe what the items share in plain, direct language (e.g. 'these all follow the same word' or 'each of these can precede the same noun') — no metaphors, no wordplay, no poetry",
+  "nudge": "one sentence that gives a genuine clue toward the connection — hint at the TYPE or STRUCTURE of the pattern (e.g. 'these all pair with the same hidden word' or 'think about what category secretly links them all') without naming the answer or any item — not too vague, not too obvious, no abstract metaphors",
   "examples": ["item5", "item6", "item7", "item8", "item9"]
 }
 
@@ -1078,10 +1078,12 @@ async function judgeItem(item) {
 Theme: "${S.theme}"
 Theme description: ${S.hint}
 
-Important: if the theme involves compound words, words that precede or follow another word, or word combinations — judge whether the guessed word can form such a combination, not whether the word is an example of something in the real world.
-For example: if the theme is "words that follow 'counter'" and the player guesses "part", answer YES because "counterpart" is valid.
+Rules:
+- If the theme is about compound words or word combinations (e.g. "words that follow X" or "X + ___ compounds"), answer YES only if the combination produces a REAL, COMMON, standard English word or phrase — not an invented one.
+- For all other themes, judge whether the item genuinely and clearly fits.
+- Be consistent. Do not accept borderline or coincidental matches.
 
-Answer with ONLY the word YES or NO (uppercase, nothing else). Be consistent and fair.`;
+Answer with ONLY the word YES or NO (uppercase, nothing else).`;
 
   const answer = await callClaude(system, `Item: "${item}"`, 10);
   return answer.toUpperCase().startsWith('YES');
