@@ -1046,18 +1046,20 @@ GOOD theme types (use these as inspiration — don't repeat the exact examples, 
 - Things you can [verb] — catch: cold, bus, fish, criminal, flight, wave; hold in one hand: marble, coin, lighter, walnut, dice
 - Compound words — items that all precede or follow a hidden word: e.g. all follow "break": ground, wind, heart, record, news, tie, silence, fast
 - Things named after real people (eponyms): jacuzzi, cardigan, wellington, sandwich, bowie knife, diesel
-- Words with a hidden linguistic property: silent letter, palindrome, also a verb, also a unit of measurement, contains a smaller word
+- Words with a hidden linguistic property: silent letter, palindrome, also a verb, also a unit of measurement, contains a smaller word — ONLY use "contains hidden word" themes if you have carefully verified letter by letter that each starter literally contains the hidden word as consecutive characters (e.g. "carpet" contains "carp", "island" contains "asp", "trampoline" contains "ram")
 - Size or weight surprises: things heavier than a grand piano, things lighter than a feather, things bigger than a double-decker bus, things that fit in one hand
 - Unexpected category with surprising members: things that are technically a fruit, things that are legal to own but surprising
 - Things associated with a specific colour without being that colour: flamingo, lobster, blush, salmon (all pink)
 
 Rules:
-- 4 starter items must CLEARLY fit the theme
+- 4 starter items must CLEARLY and VERIFIABLY fit the theme
+- For any "contains hidden word" or linguistic theme: double-check each starter letter by letter before including it — do not guess or assume
 - The connection should NOT be immediately obvious from the 4 starters alone
 - Medium to hard difficulty — avoid trivial themes like "animals", "fruits", or "things that are red"
 - Avoid themes based on nationalities, country names, or obscure cultural references
 - The theme should produce a satisfying "aha!" moment
 - Prefer themes where players can probe freely with common everyday words
+- If you are not 100% certain every starter fits, choose a different theme type
 
 Return ONLY valid JSON, no extra text:
 {
@@ -1091,9 +1093,10 @@ Theme: "${S.theme}"
 Theme description: ${S.hint}
 
 Rules:
-- If the theme is about compound words or word combinations (e.g. "words that follow X" or "X + ___ compounds"), answer YES only if the combination produces a REAL, COMMON, standard English word or phrase — not an invented one.
+- If the theme is about words that CONTAIN a hidden word inside (e.g. "words containing an animal"), you MUST verify character by character that the hidden word appears as consecutive letters in the guessed word. Do not accept creative or loose interpretations — only exact consecutive letter matches count.
+- If the theme is about compound words or word combinations (e.g. "words that follow X"), answer YES only if the combination produces a REAL, COMMON standard English word or phrase.
 - For all other themes, judge whether the item genuinely and clearly fits.
-- Be consistent. Do not accept borderline or coincidental matches.
+- Be strict. Do not accept borderline or coincidental matches.
 
 Answer with ONLY the word YES or NO (uppercase, nothing else).`;
 
