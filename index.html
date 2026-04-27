@@ -812,7 +812,7 @@ async function startRound() {
     S.starters = puzzle.starters; S.yes = [...puzzle.starters];
     $id('nudge-btn').disabled = true;
     $id('examples-btn').disabled = true;
-    $id('hints-locked').textContent = 'Examples unlock at 7 · Nudge at 12';
+    $id('hints-locked').textContent = 'Examples unlock after guess 7, Nudge after guess 12';
     $id('hints-locked').style.display = '';
     $id('nudge-text').style.display = 'none';
     S.active = true;
@@ -909,7 +909,7 @@ function checkHintUnlock() {
   if (!S.examplesUnlocked && total >= 7) {
     S.examplesUnlocked = true;
     $id('examples-btn').disabled = false;
-    lockedEl.textContent = 'Nudge unlocks at 12';
+    lockedEl.textContent = 'Nudge unlocks after guess 12';
   }
   if (!S.nudgeUnlocked && total >= 12) {
     S.nudgeUnlocked = true;
@@ -1084,29 +1084,27 @@ YES = the item clearly fits the theme. NO = it does not. Be consistent and fair.
 async function judgeTheme(playerGuess) {
   const guessLower = playerGuess.toLowerCase().trim();
   const themeLower = S.theme.toLowerCase();
-  const hintLower  = S.hint.toLowerCase();
 
-  // Fast accept: player's answer (or any word in it, 4+ chars)
-  // appears as a key word in the theme or hint description
-  if (guessLower.length >= 4) {
-    if (themeLower.includes(guessLower) || hintLower.includes(guessLower)) return true;
-  }
-  // Also check each word of the guess against theme/hint
-  const words = guessLower.split(/\s+/).filter(w => w.length >= 4);
-  for (const w of words) {
-    if (themeLower.includes(w) || hintLower.includes(w)) return true;
-  }
+  // Fast accept only if the player's full answer is a substring of the theme label itself
+  if (guessLower.length >= 4 && themeLower.includes(guessLower)) return true;
 
-  const system = `You are judging whether a player correctly identified the theme in a word game.
+  const system = `You are a strict judge for a word puzzle game. The player must correctly identify the specific theme that connects a set of items.
+
 The actual theme: "${S.theme}"
-What to accept: ${S.hint}
+What counts as correct: ${S.hint}
 
-Be GENEROUS. Accept if:
-- The player identifies the key connecting word or pattern, even as a single word
-- The player uses different wording but clearly understands the connection
-- The answer is partially phrased but unmistakably correct
+ACCEPT if:
+- The player identifies the same core connection, even with slightly different wording
+- Minor plural/singular or word-form variations (e.g. "berry" and "berries" for a berry theme)
+- A shorter but accurate version of the theme label
 
-Only reject if the answer is clearly wrong or shows no understanding at all.
+REJECT if:
+- The answer describes a DIFFERENT property of the items — even if that property happens to be true
+- The answer is vague and could apply to countless unrelated things (e.g. "things that open", "things that are old", "things that are big")
+- The answer only partially captures the theme or misses the actual connecting pattern
+- The answer is accidentally correct about one item but not the real theme
+
+Be strict. A lucky coincidence or a true-but-irrelevant property is WRONG.
 
 Answer with ONLY the word CORRECT or WRONG (uppercase, nothing else).`;
 
