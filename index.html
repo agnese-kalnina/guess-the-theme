@@ -253,9 +253,9 @@
       white-space: nowrap;
     }
     .chip.starter {
-      background: rgba(196,83,42,.07);
-      border: 1.5px solid var(--accent);
-      color: var(--accent2);
+      background: var(--yes-bg);
+      border: 1.5px solid var(--yes-bdr);
+      color: var(--yes);
     }
     .chip.yes {
       background: var(--yes-bg);
@@ -521,6 +521,81 @@
     }
     .btn-back:hover { border-color: var(--border2); color: var(--text); }
 
+    /* ─── HINTS ──────────────────────────────── */
+    .hints-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .hint-btn {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem;
+      background: var(--warm);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: var(--mid);
+      cursor: pointer;
+      transition: border-color 0.15s, opacity 0.15s;
+    }
+    .hint-btn:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+    .hint-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .hint-cost {
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .hint-i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.1rem;
+      height: 1.1rem;
+      border-radius: 50%;
+      border: 1.5px solid var(--border2);
+      font-size: 0.62rem;
+      color: var(--dim);
+      cursor: help;
+      position: relative;
+    }
+    .hint-i::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.7rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      z-index: 10;
+    }
+    .hint-i:hover::after { opacity: 1; }
+
+    .nudge-reveal {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.88rem;
+      color: var(--mid);
+      font-style: italic;
+      padding: 0.6rem 0.9rem;
+      background: var(--warm);
+      border-left: 3px solid var(--border2);
+      border-radius: 0 6px 6px 0;
+      margin-top: 0.5rem;
+    }
+
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -534,9 +609,9 @@
     <div class="game-badge">Puzzle game</div>
     <div class="game-title">Guess the theme</div>
     <p class="game-desc">
-      Four items share a hidden connection. Guess more items to probe it —
-      each answer is yes or no. When you've figured it out, declare the theme.
-      The fewer guesses it takes, the higher you score.
+      Four items share a hidden connection. Guess more items to narrow it down —
+      each will either fit the theme or it won't. When you've figured it out,
+      declare the theme. The fewer guesses it takes, the higher you score.
     </p>
     <div class="points-row">
       <span class="pill pill-dark">Start: 1,000 pts</span>
@@ -585,6 +660,20 @@
       <div class="chips" id="no-chips"></div>
     </div>
 
+    <div id="hints-section" style="display:none">
+      <div class="hints-row">
+        <button class="hint-btn" id="nudge-btn" onclick="useNudge()">
+          💡 Nudge <span class="hint-cost">−50 pts</span>
+          <span class="hint-i" data-tip="A cryptic clue about the theme">i</span>
+        </button>
+        <button class="hint-btn" id="examples-btn" onclick="useExamples()">
+          📋 Examples <span class="hint-cost">−75 pts</span>
+          <span class="hint-i" data-tip="5 more items that fit the theme">i</span>
+        </button>
+      </div>
+      <div id="nudge-text" class="nudge-reveal" style="display:none"></div>
+    </div>
+
     <hr class="warm-divider">
 
     <div class="guess-box">
@@ -609,7 +698,7 @@
       <strong style="color:var(--accent)">&minus;100 pts</strong> if you're wrong.
     </div>
     <input id="ov-inp" class="ov-inp" type="text"
-           placeholder="e.g. Things that get smaller as you use them"
+           placeholder="e.g. All items are red, or things made of wood…"
            maxlength="160" onkeydown="ovk(event)">
     <div class="ov-fb" id="ov-fb"></div>
     <div class="ov-btns">
@@ -655,8 +744,9 @@ const MAX = 1000, COST = 20, WRONG = 100, HINT = 50, FLOOR = 10;
 // ═══════════════════════════════════════════
 const S = {
   round: 1, total: 0,
-  score: MAX, theme: '', hint: '', starters: [],
-  yes: [], no: [], guesses: 0, wrongs: 0, active: false
+  score: MAX, theme: '', hint: '', nudge: '', examples: [], starters: [],
+  yes: [], no: [], guesses: 0, wrongs: 0, active: false,
+  hintsShown: false, nudgeUsed: false, examplesUsed: false
 };
 
 // ═══════════════════════════════════════════
@@ -689,8 +779,10 @@ function setGuessEnabled(on) {
 // ROUND LIFECYCLE
 // ═══════════════════════════════════════════
 async function startRound() {
-  S.score = MAX; S.theme = ''; S.hint = ''; S.starters = [];
-  S.yes = []; S.no = []; S.guesses = 0; S.wrongs = 0; S.active = false;
+  S.score = MAX; S.theme = ''; S.hint = ''; S.nudge = ''; S.examples = [];
+  S.starters = []; S.yes = []; S.no = [];
+  S.guesses = 0; S.wrongs = 0; S.active = false;
+  S.hintsShown = false; S.nudgeUsed = false; S.examplesUsed = false;
 
   hideEl('screen-landing');
   hideEl('screen-game');
@@ -701,7 +793,12 @@ async function startRound() {
   try {
     const puzzle = await generatePuzzle();
     S.theme = puzzle.theme; S.hint = puzzle.hint;
+    S.nudge = puzzle.nudge || ''; S.examples = puzzle.examples || [];
     S.starters = puzzle.starters; S.yes = [...puzzle.starters];
+    hideEl('hints-section');
+    $id('nudge-btn').disabled = false;
+    $id('examples-btn').disabled = false;
+    $id('nudge-text').style.display = 'none';
     S.active = true;
 
     hideEl('screen-loading');
@@ -761,6 +858,7 @@ async function doGuess() {
     deduct(COST);
     fits ? S.yes.push(item) : S.no.push(item);
     renderChips();
+    checkHintUnlock();
     setFb(
       fits ? `✓ "${item}" fits the theme. (−${COST} pts)` : `✗ "${item}" doesn't fit. (−${COST} pts)`,
       fits ? 'yes' : 'no'
@@ -769,6 +867,37 @@ async function doGuess() {
 
   setGuessEnabled(true);
   $id('guess-inp').focus();
+}
+
+// ═══════════════════════════════════════════
+// HINTS
+// ═══════════════════════════════════════════
+function checkHintUnlock() {
+  if (!S.hintsShown && S.guesses >= 10) {
+    S.hintsShown = true;
+    showEl('hints-section', 'block');
+  }
+}
+
+function useNudge() {
+  if (S.nudgeUsed) return;
+  S.nudgeUsed = true;
+  deduct(HINT);
+  $id('nudge-btn').disabled = true;
+  $id('nudge-text').textContent = S.nudge;
+  $id('nudge-text').style.display = 'block';
+}
+
+function useExamples() {
+  if (S.examplesUsed) return;
+  S.examplesUsed = true;
+  deduct(75);
+  $id('examples-btn').disabled = true;
+  const known = S.yes.map(x => x.toLowerCase());
+  S.examples.forEach(item => {
+    if (!known.includes(item.toLowerCase())) S.yes.push(item);
+  });
+  renderChips();
 }
 
 // ═══════════════════════════════════════════
@@ -868,7 +997,9 @@ Return ONLY valid JSON, no extra text:
 {
   "theme": "concise theme label, 3-8 words",
   "starters": ["item1", "item2", "item3", "item4"],
-  "hint": "description of the core concept to use when judging player answers"
+  "hint": "description of the core concept for judging player answers",
+  "nudge": "one cryptic sentence hinting at the theme without naming it",
+  "examples": ["item5", "item6", "item7", "item8", "item9"]
 }`;
 
   const raw = await callClaude(system, 'Generate a new puzzle.', 300);
