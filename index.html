@@ -1077,8 +1077,11 @@ async function judgeItem(item) {
   const system = `You are judging whether an item fits a hidden theme in a word guessing game.
 Theme: "${S.theme}"
 Theme description: ${S.hint}
-Answer with ONLY the word YES or NO (uppercase, nothing else).
-YES = the item clearly fits the theme. NO = it does not. Be consistent and fair.`;
+
+Important: if the theme involves compound words, words that precede or follow another word, or word combinations — judge whether the guessed word can form such a combination, not whether the word is an example of something in the real world.
+For example: if the theme is "words that follow 'counter'" and the player guesses "part", answer YES because "counterpart" is valid.
+
+Answer with ONLY the word YES or NO (uppercase, nothing else). Be consistent and fair.`;
 
   const answer = await callClaude(system, `Item: "${item}"`, 10);
   return answer.toUpperCase().startsWith('YES');
